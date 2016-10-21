@@ -74,7 +74,7 @@ LINE_STOPS.each_with_index do |line, i|
       distance =  Haversine.distance(stop_coord, line_coord).to_m;
 
       if(distance < 20)
-        write_csv_file(line, stop, ts_stops)
+        # write_csv_file(line, stop, ts_stops)
 
         if(line_old == line[LINE_ID])
           json_final_content.push(create_json_module(line, stop, ts_stops))
