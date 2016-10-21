@@ -1,61 +1,92 @@
 require 'csv'
 require 'haversine'
+require 'json'
 
-line_stops_path = "data_files/pontos_por_linha.csv";
-stops_description_path ='data_files/stops_description.csv';
-touristic_stops_path ='data_files/pontos_turisticos.csv';
 
-line_stops = CSV.read(line_stops_path,  encoding: "ISO8859-1:utf-8");
-stops_description = CSV.read(stops_description_path,  encoding: "ISO8859-1:utf-8");
-touristic_stops = CSV.read(touristic_stops_path,  encoding: "ISO8859-1:utf-8");
+line_stops_path = "data_files/pontos_por_linha.csv"
+stops_description_path ='data_files/stops.txt'
+touristic_stops_path ='data_files/pontos_turisticos.csv'
 
-# LATITUDE = 4
-# LONGITUDE = 5
-# LINE_ID = 0
-# STOP_DESC = 2
+LINE_STOPS = CSV.read(line_stops_path,  encoding: "ISO8859-1")
+STOPS_DESCRIPTION = CSV.read(stops_description_path,  encoding: "utf-8")
+TOURISTIC_STOPS = CSV.read(touristic_stops_path,  encoding: "ISO8859-1");
 
-# line_stops.each_with_index do |line, i|
-#   stops_description.each_with_index do |stop, j|
-#     unless ( i == 0 or j == 0)
-#       stop_coord = [stop[LATITUDE].to_f, stop[LONGITUDE].to_f]
-#       line_coord = [line[LATITUDE].to_f, line[LONGITUDE].to_f]
-#       distance =  Haversine.distance(stop_coord, line_coord).to_meters;
-#       if(distance < 10)
-#         file = "linha_" + line[LINE_ID]+ ".csv"
-#         file_path = File.join('linhas', file)
-#         CSV.open(file_path, "a") do |csv|
-#           csv << [line[LINE_ID], line[LATITUDE], line[LONGITUDE], stop[STOP_DESC], distance, get_tourist_stops(line_coord)]
-#         end
-#       end
-#     end
-#   end
-# end
+LATITUDE = 4
+LONGITUDE = 5
+LINE_ID = 0
+STOP_DESC = 2
+SEQUENCE = 3
 
-# def get_tourist_stops line_coord, touristic_stops
-  TS_LAT = 5;
-  TS_LONG = 6;
-  TS_NAME = 0;
-  line_old = 0;
-  lines = 0
-  line_stops.each_with_index do |line, j|
-    near_ts = ""
-    touristic_stops.each_with_index do |t_stop, i|
-      unless ( i == 0 or j == 0)
-        line_coord = [line[4].to_f, line[5].to_f]
-        t_stop_coord = [t_stop[TS_LAT].to_f, t_stop[TS_LONG].to_f]
-        distance =  Haversine.distance(t_stop_coord, line_coord).to_meters;
-        if(distance < 500)
-            near_ts += t_stop[TS_NAME]+";"
+# Touristic stops constants
+TS_LAT = 5
+TS_LONG = 6
+TS_NAME = 0
+
+
+def get_tourist_stops (line_coord)
+  near_ts = []
+  TOURISTIC_STOPS.each_with_index do |t_stop, i|
+    unless ( i == 0 )
+      t_stop_coord = [t_stop[TS_LAT].to_f, t_stop[TS_LONG].to_f]
+      distance =  Haversine.distance(t_stop_coord, line_coord).to_m;
+
+      if(distance < 500)
+          stop = {
+            "nome" => t_stop[TS_NAME],
+            "distancia" => distance.round(0)
+          }
+          near_ts.push(stop)
+      end
+    end
+  end
+  near_ts
+end
+
+def write_csv_file(line, stop, ts_stops)
+  file_path = File.join('linhas','csv', line[LINE_ID]+".csv")
+  CSV.open(file_path, "a") do |csv|
+    csv << [line[LINE_ID], line[LATITUDE], line[LONGITUDE], stop[STOP_DESC], ts_stops]
+  end
+end
+
+def create_json_module(line, stop, ts_stops)
+  json_structure = {
+    "linha" => line[LINE_ID],
+    "descricao_ponto" => stop[STOP_DESC],
+    "sequencia" => line[SEQUENCE],
+    "latitude" => line[LATITUDE],
+    "longitude" => line[LONGITUDE],
+    "pontos_turisticos" => ts_stops
+  }
+  json_structure
+end
+
+line_old = "673"
+json_final_content = []
+
+LINE_STOPS.each_with_index do |line, i|
+  line_coord = [line[LATITUDE].to_f, line[LONGITUDE].to_f]
+  ts_stops = get_tourist_stops(line_coord)
+
+  STOPS_DESCRIPTION.each_with_index do |stop, j|
+    unless ( i == 0 or j == 0)
+      stop_coord = [stop[LATITUDE].to_f, stop[LONGITUDE].to_f]
+      distance =  Haversine.distance(stop_coord, line_coord).to_m;
+
+      if(distance < 20)
+        write_csv_file(line, stop, ts_stops)
+
+        if(line_old == line[LINE_ID])
+          json_final_content.push(create_json_module(line, stop, ts_stops))
+        else
+          json_file_path = File.join('linhas','json', line_old+".json")
+          File.open(json_file_path, "a") do |json|
+            json << json_final_content.to_json
+          end
+          line_old = line[LINE_ID]
+          json_final_content = []
         end
       end
     end
-    if near_ts != ''
-      p near_ts
-    end
-    if(line_old != line[0].to_i)
-      lines++
-      line_old = line[0].to_i
-    end
   end
-  p lines
-#end
+end
