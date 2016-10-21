@@ -1,13 +1,13 @@
 require 'csv'
 require 'haversine'
 
-line_stops_path = "data_files/pontos_por_linha.csv"
-stops_description_path ='data_files/stops_description.csv'
-touristic_stops_path ='data_files/stops_description.csv'
+line_stops_path = "data_files/pontos_por_linha.csv";
+stops_description_path ='data_files/stops_description.csv';
+touristic_stops_path ='data_files/pontos_turisticos.csv';
 
-line_stops = CSV.read(line_stops_path,  encoding: "ISO8859-1:utf-8")
-stops_description = CSV.read(stops_description_path,  encoding: "ISO8859-1:utf-8")
-touristic_stops = CSV.read(touristic_stops_path,  encoding: "ISO8859-1:utf-8")
+line_stops = CSV.read(line_stops_path,  encoding: "ISO8859-1:utf-8");
+stops_description = CSV.read(stops_description_path,  encoding: "ISO8859-1:utf-8");
+touristic_stops = CSV.read(touristic_stops_path,  encoding: "ISO8859-1:utf-8");
 
 # LATITUDE = 4
 # LONGITUDE = 5
@@ -32,29 +32,30 @@ touristic_stops = CSV.read(touristic_stops_path,  encoding: "ISO8859-1:utf-8")
 # end
 
 # def get_tourist_stops line_coord, touristic_stops
-  TS_LAT = 5
-  TS_LONG = 6
-  TS_NAME = 0 
-  near_ts = ""
-  line_old = 0
+  TS_LAT = 5;
+  TS_LONG = 6;
+  TS_NAME = 0;
+  line_old = 0;
+  lines = 0
   line_stops.each_with_index do |line, j|
+    near_ts = ""
     touristic_stops.each_with_index do |t_stop, i|
       unless ( i == 0 or j == 0)
         line_coord = [line[4].to_f, line[5].to_f]
         t_stop_coord = [t_stop[TS_LAT].to_f, t_stop[TS_LONG].to_f]
         distance =  Haversine.distance(t_stop_coord, line_coord).to_meters;
-        if(distance < 10000)
-            near_ts += TS_NAME
+        if(distance < 500)
+            near_ts += t_stop[TS_NAME]+";"
         end
       end
     end
-    if TS_NAME != 0
-      p TS_NAME
+    if near_ts != ''
+      p near_ts
     end
     if(line_old != line[0].to_i)
-      p line
+      lines++
       line_old = line[0].to_i
     end
   end
+  p lines
 #end
-
