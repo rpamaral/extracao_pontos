@@ -1,6 +1,8 @@
 require 'csv'
 require 'haversine'
 require 'json'
+require 'pry'
+
 
 
 line_stops_path = "data_files/pontos_por_linha.csv"
@@ -45,7 +47,7 @@ end
 def write_csv_file(line, stop, ts_stops)
   file_path = File.join('linhas','csv', line[LINE_ID]+".csv")
   CSV.open(file_path, "a") do |csv|
-    csv << [line[LINE_ID], line[LATITUDE], line[LONGITUDE], stop[STOP_DESC], ts_stops]
+    csv << [line[LINE_ID], line[SEQUENCE], stop[LATITUDE], stop[LONGITUDE], stop[STOP_DESC], ts_stops]
   end
 end
 
@@ -60,7 +62,6 @@ def create_json_module(line, stop, ts_stops)
   }
   json_structure
 end
-
 line_old = "673"
 json_final_content = []
 
@@ -69,12 +70,13 @@ LINE_STOPS.each_with_index do |line, i|
   ts_stops = get_tourist_stops(line_coord)
 
   STOPS_DESCRIPTION.each_with_index do |stop, j|
+   
     unless ( i == 0 or j == 0)
       stop_coord = [stop[LATITUDE].to_f, stop[LONGITUDE].to_f]
       distance =  Haversine.distance(stop_coord, line_coord).to_m;
 
-      if(distance < 20)
-        # write_csv_file(line, stop, ts_stops)
+      if(distance < 10)
+        #write_csv_file(line, stop, ts_stops)
 
         if(line_old == line[LINE_ID])
           json_final_content.push(create_json_module(line, stop, ts_stops))
@@ -86,6 +88,7 @@ LINE_STOPS.each_with_index do |line, i|
           line_old = line[LINE_ID]
           json_final_content = []
         end
+        break
       end
     end
   end
