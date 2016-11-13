@@ -42,7 +42,7 @@ LINE_STOPS.each_with_index do |line, i|
       t_stop_coord = [t_stop[TS_LAT].to_f, t_stop[TS_LONG].to_f]
       distance =  Haversine.distance(t_stop_coord, line_coord).to_m;
 
-      if(distance < 500)
+      if(distance < 2000)
         
         if(line_old == line[LINE_ID])
 

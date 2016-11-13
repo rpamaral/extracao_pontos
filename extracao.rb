@@ -32,7 +32,7 @@ def get_tourist_stops (line_coord)
       t_stop_coord = [t_stop[TS_LAT].to_f, t_stop[TS_LONG].to_f]
       distance =  Haversine.distance(t_stop_coord, line_coord).to_m;
 
-      if(distance < 500)
+      if(distance < 2000)
           stop = {
             "nome" => t_stop[TS_NAME],
             "distancia" => distance.round(0)
@@ -63,6 +63,8 @@ def create_json_module(line, stop, ts_stops)
   json_structure
 end
 line_old = "673"
+cont_ts = 0
+tem_ponto_turistico = false
 json_final_content = []
 
 LINE_STOPS.each_with_index do |line, i|
@@ -77,7 +79,6 @@ LINE_STOPS.each_with_index do |line, i|
 
       if(distance < 10)
         #write_csv_file(line, stop, ts_stops)
-
         if(line_old == line[LINE_ID])
           json_final_content.push(create_json_module(line, stop, ts_stops))
         else
