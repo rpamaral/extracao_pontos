@@ -66,19 +66,25 @@ line_old = "673"
 cont_ts = 0
 tem_ponto_turistico = false
 json_final_content = []
+all_stops_count = STOPS_DESCRIPTION.size-1
 
 LINE_STOPS.each_with_index do |line, i|
   line_coord = [line[LATITUDE].to_f, line[LONGITUDE].to_f]
   ts_stops = get_tourist_stops(line_coord)
-
+  
   STOPS_DESCRIPTION.each_with_index do |stop, j|
    
     unless ( i == 0 or j == 0)
       stop_coord = [stop[LATITUDE].to_f, stop[LONGITUDE].to_f]
       distance =  Haversine.distance(stop_coord, line_coord).to_m;
 
-      if(distance < 10)
-        #write_csv_file(line, stop, ts_stops)
+      if(distance < 20 or j == all_stops_count)
+        if (distance > 20 and j == all_stops_count)
+          stop[LATITUDE] = line[LATITUDE]
+          stop[LONGITUDE] = line[LONGITUDE]
+          stop[STOP_DESC] = "Nome do ponto nao identificado"
+        end
+        write_csv_file(line, stop, ts_stops)
         if(line_old == line[LINE_ID])
           json_final_content.push(create_json_module(line, stop, ts_stops))
         else
