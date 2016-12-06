@@ -68,36 +68,61 @@ tem_ponto_turistico = false
 json_final_content = []
 all_stops_count = STOPS_DESCRIPTION.size-1
 
-LINE_STOPS.each_with_index do |line, i|
-  line_coord = [line[LATITUDE].to_f, line[LONGITUDE].to_f]
-  ts_stops = get_tourist_stops(line_coord)
-  
-  STOPS_DESCRIPTION.each_with_index do |stop, j|
-   
-    unless ( i == 0 or j == 0)
-      stop_coord = [stop[LATITUDE].to_f, stop[LONGITUDE].to_f]
-      distance =  Haversine.distance(stop_coord, line_coord).to_m;
 
-      if(distance < 22 or j == all_stops_count)
-        if (distance > 22 and j == all_stops_count)
-          stop[LATITUDE] = line[LATITUDE]
-          stop[LONGITUDE] = line[LONGITUDE]
-          stop[STOP_DESC] = "Nome do ponto nao identificado"
-        end
-        write_csv_file(line, stop, ts_stops)
-        if(line_old == line[LINE_ID])
-          json_final_content.push(create_json_module(line, stop, ts_stops))
-        else
-          json_file_path = File.join('linhas','json', line_old+".json")
-          File.open(json_file_path, "a") do |json|
-            json << json_final_content.to_json
-          end
-          line_old = line[LINE_ID]
-          json_final_content = []
-          json_final_content.push(create_json_module(line, stop, ts_stops))
-        end
-        break
-      end
+Dir["linhas/**/*.json"].each do |line|
+  data_hash = JSON.parse(File.read(line))
+  size = (data_hash.size/2).to_i
+  check = Array.new(size, 0)
+  cont = 0 
+  data_hash.each do |stop|
+    check[(stop['sequencia'].to_i)-1] += 1 if check[(stop['sequencia'].to_i)-1]
+    cont += 1
+  end
+  round = 0
+  circular = 0
+  check.each do |i|
+    if i == 2
+      round +=1
+    elsif i = 1
+      circular +=1
     end
   end
+  if round < (size-5) or circular != size
+    p line
+  end
 end
+
+
+
+# LINE_STOPS.each_with_index do |line, i|
+#   line_coord = [line[LATITUDE].to_f, line[LONGITUDE].to_f]
+#   ts_stops = get_tourist_stops(line_coord)
+  
+#   STOPS_DESCRIPTION.each_with_index do |stop, j|
+   
+#     unless ( i == 0 or j == 0)
+#       stop_coord = [stop[LATITUDE].to_f, stop[LONGITUDE].to_f]
+#       distance =  Haversine.distance(stop_coord, line_coord).to_m;
+
+#       if(distance < 20 or j == all_stops_count)
+#         if (distance > 20 and j == all_stops_count)
+#           stop[LATITUDE] = line[LATITUDE]
+#           stop[LONGITUDE] = line[LONGITUDE]
+#           stop[STOP_DESC] = "Nome do ponto nao identificado"
+#         end
+#         write_csv_file(line, stop, ts_stops)
+#         if(line_old == line[LINE_ID])
+#           json_final_content.push(create_json_module(line, stop, ts_stops))
+#         else
+#           json_file_path = File.join('linhas','json', line_old+".json")
+#           File.open(json_file_path, "a") do |json|
+#             json << json_final_content.to_json
+#           end
+#           line_old = line[LINE_ID]
+#           json_final_content = []
+#         end
+#         break
+#       end
+#     end
+#   end
+# end
